@@ -1,0 +1,54 @@
+name: Express.js CI ino_dev
+
+on:
+  push:
+    branches:
+      - ino_dev
+  pull_request:
+    branches:
+      - ino_dev
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Show available scripts
+        run: npm run
+
+      - name: Run tests if available
+        run: npm test --if-present
+
+      - name: Create CI report
+        run: |
+          mkdir -p ci-report
+          echo "Express.js CI completed" > ci-report/result.txt
+          echo "Branch: $GITHUB_REF_NAME" >> ci-report/result.txt
+          echo "Commit: $GITHUB_SHA" >> ci-report/result.txt
+          echo "Node version:" >> ci-report/result.txt
+          node --version >> ci-report/result.txt
+          echo "NPM version:" >> ci-report/result.txt
+          npm --version >> ci-report/result.txt
+
+      - name: Upload CI report
+        uses: actions/upload-artifact@v4
+        with:
+          name: expressjs-ci-report
+          path: ci-report/
